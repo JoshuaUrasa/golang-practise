@@ -11,6 +11,12 @@ type JWTService struct {
 	refreshSecret string
 }
 
+type AccessClaims struct {
+	UserID uint   `json:"user_id"`
+	Email  string `json:"email"`
+	jwt.RegisteredClaims
+}
+
 func NewJWTService(accessSecret, refreshSecret string) *JWTService {
 	return &JWTService{
 		accessSecret:  accessSecret,
@@ -39,4 +45,20 @@ func (j *JWTService) GenerateRefreshToken(userID uint) (string, error) {
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(j.refreshSecret))
+}
+
+// validate access token
+func (j *JWTService) ValidateAccessToken(tokenString string) (*AccessClaims, error) {
+	claims := &AccessClaims{}
+
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (any, error) {
+		return []byte(j.accessSecret), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if !token.Valid {
+		return nil, jwt.ErrTokenInvalidClaims
+	}
+	return claims, nil
 }

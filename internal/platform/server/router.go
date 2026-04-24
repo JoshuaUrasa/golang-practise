@@ -2,6 +2,8 @@ package server
 
 import (
 	"expense-tracker/internal/auth"
+	"expense-tracker/internal/expense"
+	"expense-tracker/internal/middleware"
 
 	"github.com/labstack/echo/v5"
 	"gorm.io/gorm"
@@ -15,6 +17,9 @@ func NewRouter(db *gorm.DB, accessSecret, refreshSecret string) *echo.Echo {
 	authService := auth.NewService(db, jwtService)
 	authHandler := auth.NewHandler(authService)
 
+	expenseService := expense.NewService(db)
+	expenseHandler := expense.NewHandler(expenseService)
+
 	//Api group
 	api := e.Group("/api")
 
@@ -25,6 +30,23 @@ func NewRouter(db *gorm.DB, accessSecret, refreshSecret string) *echo.Echo {
 
 	authRoutes.POST("/register", authHandler.Register)
 	authRoutes.POST("/login", authHandler.Login)
+
+	protected := v1.Group("")
+	protected.Use(middleware.AuthMiddleware(jwtService))
+
+	expenseGroup := protected.Group("/expenses")
+	expenseGroup.GET("", expenseHandler.ListExpenses)
+	expenseGroup.POST("", expenseHandler.CreateExpense)
+	expenseGroup.GET("/:id", expenseHandler.GetExpenseByID)
+	expenseGroup.PUT("/:id", expenseHandler.UpdateExpense)
+	expenseGroup.DELETE("/:id", expenseHandler.DeleteExpense)
+
+	protected.GET("/me", func(c *echo.Context) error {
+		return c.JSON(200, map[string]any{
+			"user_id": c.Get("user_id"),
+			"email":   c.Get("email"),
+		})
+	})
 
 	return e
 }
