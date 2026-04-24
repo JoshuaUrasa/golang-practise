@@ -62,3 +62,21 @@ func (j *JWTService) ValidateAccessToken(tokenString string) (*AccessClaims, err
 	}
 	return claims, nil
 }
+
+func (j *JWTService) ValidateRefreshToken(tokenString string) (*jwt.Token, jwt.MapClaims, error) {
+	claims := jwt.MapClaims{}
+
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (any, error) {
+		return []byte(j.refreshSecret), nil
+	})
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if !token.Valid {
+		return nil, nil, jwt.ErrTokenInvalidClaims
+	}
+
+	return token, claims, nil
+}

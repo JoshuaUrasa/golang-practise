@@ -96,3 +96,37 @@ func (s *Service) Login(req LoginRequest) (*AuthResponse, error) {
 		RefreshToken: refreshToken,
 	}, nil
 }
+
+func (s *Service) RefreshToken(req RefreshTokenRequest) (*AuthResponse, error) {
+	_, claims, err := s.jwtService.ValidateRefreshToken(req.RefreshToken)
+	if err != nil {
+		return nil, errors.New("invalid refresh token")
+	}
+
+	userIDFloat, ok := claims["user_id"].(float64)
+	if !ok {
+		return nil, errors.New("invalid token claims")
+	}
+
+	userID := uint(userIDFloat)
+
+	var existingUser user.User
+	if err := s.db.First(&existingUser, userID).Error; err != nil {
+		return nil, errors.New("user not found")
+	}
+
+	accessToken, err := s.jwtService.GenerateAccessToken(existingUser.Id, existingUser.Email)
+	if err != nil {
+		return nil, err
+	}
+
+	refreshToken, err := s.jwtService.GenerateRefreshToken(existingUser.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &AuthResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}, nil
+}

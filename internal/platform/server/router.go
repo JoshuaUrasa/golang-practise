@@ -30,6 +30,7 @@ func NewRouter(db *gorm.DB, accessSecret, refreshSecret string) *echo.Echo {
 
 	authRoutes.POST("/register", authHandler.Register)
 	authRoutes.POST("/login", authHandler.Login)
+	authRoutes.POST("/refresh", authHandler.RefreshToken)
 
 	protected := v1.Group("")
 	protected.Use(middleware.AuthMiddleware(jwtService))
