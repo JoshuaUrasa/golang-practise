@@ -22,6 +22,10 @@ func NewService(db *gorm.DB, jwtService *JWTService) *Service {
 func (s *Service) Register(req RegisterRequest) (*AuthResponse, error) {
 	var existingUser user.User
 
+	if req.Email == "" || req.Password == "" {
+		return nil, errors.New("email and password are required")
+	}
+
 	err := s.db.Where("email= ?", req.Email).First(&existingUser).Error
 
 	if err == nil {
@@ -66,6 +70,10 @@ func (s *Service) Register(req RegisterRequest) (*AuthResponse, error) {
 
 func (s *Service) Login(req LoginRequest) (*AuthResponse, error) {
 	var existinguser user.User
+
+	if req.Email == "" || req.Password == "" {
+		return nil, errors.New("email and password are required")
+	}
 
 	err := s.db.Where("email= ?", req.Email).First(&existinguser).Error
 

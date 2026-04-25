@@ -4,6 +4,7 @@ import (
 	"expense-tracker/internal/expense"
 	"expense-tracker/internal/platform/config"
 	"expense-tracker/internal/platform/database"
+	"expense-tracker/internal/platform/logger"
 	"expense-tracker/internal/platform/server"
 	"expense-tracker/internal/user"
 	"fmt"
@@ -41,11 +42,16 @@ func main() {
 		return
 	}
 
-	e := server.NewRouter(db, cfg.JwtAccessSecret, cfg.JwtRefreshSecret)
+	//initialize logger
+	appLogger := logger.New(cfg.AppEnv)
+
+	e := server.NewRouter(db, cfg.JwtAccessSecret, cfg.JwtRefreshSecret, appLogger)
 	fmt.Println("Starting server on port", cfg.Port)
 
 	err = e.Start(":" + cfg.Port)
 	if err != nil {
 		fmt.Printf("failed to start server: %v\n", err)
 	}
+
+	appLogger.Info("config loaded", "env", cfg.AppEnv, "port", cfg.Port)
 }

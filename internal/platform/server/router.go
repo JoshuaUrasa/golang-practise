@@ -4,13 +4,22 @@ import (
 	"expense-tracker/internal/auth"
 	"expense-tracker/internal/expense"
 	"expense-tracker/internal/middleware"
+	"expense-tracker/internal/platform/metrics"
+	"log/slog"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/labstack/echo/v5"
 	"gorm.io/gorm"
 )
 
-func NewRouter(db *gorm.DB, accessSecret, refreshSecret string) *echo.Echo {
+func NewRouter(db *gorm.DB, accessSecret, refreshSecret string, logger *slog.Logger) *echo.Echo {
 	e := echo.New()
+
+	//initialize middleware
+	e.Use(middleware.RequestID())
+	e.Use(middleware.RequestLogger(logger))
+	e.Use(middleware.Metrics())
 
 	//initialize auth service and handler
 	jwtService := auth.NewJWTService(accessSecret, refreshSecret)
@@ -20,10 +29,18 @@ func NewRouter(db *gorm.DB, accessSecret, refreshSecret string) *echo.Echo {
 	expenseService := expense.NewService(db)
 	expenseHandler := expense.NewHandler(expenseService)
 
+	//metrics initialize
+	metrics.Register()
+	e.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
+
+	//health check endpoint
+	healthHandler := NewHealthHandler(db)
+	e.GET("/health", healthHandler.Check)
+
 	//Api group
 	api := e.Group("/api")
 
-	//version group
+	//version group.
 	v1 := api.Group("/v1")
 
 	authRoutes := v1.Group("/auth")
