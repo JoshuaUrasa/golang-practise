@@ -17,14 +17,12 @@ func RequestLogger(logger *slog.Logger) echo.MiddlewareFunc {
 
 			duration := time.Since(start)
 
-			// 1. Kwa v5, unwrap response kwanza ili upate struct yenye .Status
 			res, unwrapErr := echo.UnwrapResponse(c.Response())
 			status := 0
 			if unwrapErr == nil {
 				status = res.Status
 			}
 
-			// 2. Kama kuna error kutoka kwa handler, vuta status code humo
 			if err != nil {
 				var sc echo.HTTPStatusCoder
 				if errors.As(err, &sc) {

@@ -18,6 +18,7 @@ func NewRouter(db *gorm.DB, accessSecret, refreshSecret string, logger *slog.Log
 
 	//initialize middleware
 	e.Use(middleware.RequestID())
+	e.Use(middleware.Tracing())
 	e.Use(middleware.RequestLogger(logger))
 	e.Use(middleware.Metrics())
 

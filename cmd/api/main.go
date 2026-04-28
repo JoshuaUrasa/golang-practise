@@ -1,13 +1,16 @@
 package main
 
 import (
+	"context"
 	"expense-tracker/internal/expense"
 	"expense-tracker/internal/platform/config"
 	"expense-tracker/internal/platform/database"
 	"expense-tracker/internal/platform/logger"
 	"expense-tracker/internal/platform/server"
+	"expense-tracker/internal/platform/telemetry"
 	"expense-tracker/internal/user"
 	"fmt"
+	"log"
 
 	"github.com/joho/godotenv"
 )
@@ -42,8 +45,22 @@ func main() {
 		return
 	}
 
+	ctx := context.Background()
+
+	tracerProvider, err := telemetry.InitTracer(ctx, "expense-tracker")
+	if err != nil {
+		log.Fatalf("failed to initialize tracer: %v", err)
+	}
+
+	defer func() {
+		if err := tracerProvider.Shutdown(ctx); err != nil {
+			log.Printf("failed to shutdown tracer provider: %v", err)
+		}
+	}()
+
 	//initialize logger
 	appLogger := logger.New(cfg.AppEnv)
+	appLogger.Info("config loaded", "env", cfg.AppEnv, "port", cfg.Port)
 
 	e := server.NewRouter(db, cfg.JwtAccessSecret, cfg.JwtRefreshSecret, appLogger)
 	fmt.Println("Starting server on port", cfg.Port)
@@ -53,5 +70,4 @@ func main() {
 		fmt.Printf("failed to start server: %v\n", err)
 	}
 
-	appLogger.Info("config loaded", "env", cfg.AppEnv, "port", cfg.Port)
 }

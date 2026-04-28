@@ -1,8 +1,10 @@
 package expense
 
 import (
+	"context"
 	"errors"
 
+	"go.opentelemetry.io/otel"
 	"gorm.io/gorm"
 )
 
@@ -16,13 +18,11 @@ func NewService(db *gorm.DB) *Service {
 	}
 }
 
-func (s *Service) CreateExpense(userId uint, req CreateExpenseRequest) (*Expense, error) {
-	expense := Expense{
-		UserID:      userId,
-		Amount:      req.Amount,
-		Category:    req.Category,
-		Description: req.Description,
-	}
+func (s *Service) CreateExpense(ctx context.Context, userId uint, req CreateExpenseRequest) (*Expense, error) {
+	tracer := otel.Tracer("expense-service")
+
+	_, span := tracer.Start(ctx, "CreateExpense")
+	defer span.End()
 
 	if req.Amount <= 0 {
 		return nil, errors.New("amount must be greater than zero")
@@ -32,13 +32,23 @@ func (s *Service) CreateExpense(userId uint, req CreateExpenseRequest) (*Expense
 		return nil, errors.New("category is required")
 	}
 
-	if err := s.db.Create(&expense).Error; err != nil {
-		return nil, err
+	expense := Expense{
+		UserID:      userId,
+		Amount:      req.Amount,
+		Category:    req.Category,
+		Description: req.Description,
+	}
 
-	}
-	if err := s.db.Preload("User").First(&expense, expense.ID).Error; err != nil {
+	if err := s.db.Create(&expense).Error; err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
+
+	if err := s.db.Preload("User").First(&expense, expense.ID).Error; err != nil {
+		span.RecordError(err)
+		return nil, err
+	}
+
 	return &expense, nil
 }
 

@@ -35,7 +35,7 @@ func (h *Handler) CreateExpense(c *echo.Context) error {
 		})
 	}
 
-	expense, err := h.service.CreateExpense(UserId, req)
+	expense, err := h.service.CreateExpense(c.Request().Context(), UserId, req)
 
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
