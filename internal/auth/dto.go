@@ -18,3 +18,7 @@ type AuthResponse struct {
 type RefreshTokenRequest struct {
 	RefreshToken string `json:"refresh_token"`
 }
+
+type ErrorResponse struct {
+	Error string `json:"error"`
+}

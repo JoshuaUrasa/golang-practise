@@ -16,6 +16,17 @@ func NewHandler(service *Service) *Handler {
 	}
 }
 
+// Register godoc
+// @Summary      User Registration
+// @Description  Register a new user
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        request  body      auth.RegisterRequest  true  "User Registration Data"
+// @Success      201      {object}  auth.AuthResponse
+// @Failure      400      {object}  auth.ErrorResponse
+// @Failure      500      {object}  auth.ErrorResponse
+// @Router       /api/v1/auth/register [post]
 func (h *Handler) Register(c *echo.Context) error {
 	var req RegisterRequest
 
@@ -36,6 +47,17 @@ func (h *Handler) Register(c *echo.Context) error {
 	return c.JSON(http.StatusCreated, res)
 }
 
+// Login godoc
+// @Summary      User Login
+// @Description  Authenticate a user and return tokens
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        request  body      auth.LoginRequest  true  "Login Credentials"
+// @Success      200      {object}  auth.AuthResponse
+// @Failure      400      {object}  auth.ErrorResponse
+// @Failure      401      {object}  auth.ErrorResponse
+// @Router       /api/v1/auth/login [post]
 func (h *Handler) Login(c *echo.Context) error {
 	var req LoginRequest
 
@@ -56,6 +78,17 @@ func (h *Handler) Login(c *echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
+// RefreshToken godoc
+// @Summary      Refresh access token
+// @Description  Issue a new access token using a refresh token
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        request  body      auth.RefreshTokenRequest  true  "Refresh token"
+// @Success      200      {object}  auth.AuthResponse
+// @Failure      400      {object}  auth.ErrorResponse
+// @Failure      401      {object}  auth.ErrorResponse
+// @Router       /api/v1/auth/refresh [post]
 func (h *Handler) RefreshToken(c *echo.Context) error {
 	var req RefreshTokenRequest
 

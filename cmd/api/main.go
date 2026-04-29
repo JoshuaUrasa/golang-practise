@@ -11,10 +11,24 @@ import (
 	"expense-tracker/internal/user"
 	"fmt"
 	"log"
+	"net/http"
+
+	_ "expense-tracker/api/docs"
 
 	"github.com/joho/godotenv"
+	"github.com/labstack/echo/v5"
+	echoSwagger "github.com/swaggo/echo-swagger/v2"
 )
 
+// @title           Expense Tracker API
+// @version         1.0
+// @description     This is a sample expense tracker server.
+// @host            localhost:8000
+// @BasePath        /
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and JWT token.
 func main() {
 	//load env file
 
@@ -64,6 +78,22 @@ func main() {
 
 	e := server.NewRouter(db, cfg.JwtAccessSecret, cfg.JwtRefreshSecret, appLogger)
 	fmt.Println("Starting server on port", cfg.Port)
+
+	//initialize swagger
+	e.GET("/swagger", func(c *echo.Context) error {
+		return c.Redirect(http.StatusMovedPermanently, "/swagger/index.html")
+	})
+	e.GET("/swagger/", func(c *echo.Context) error {
+		return c.Redirect(http.StatusMovedPermanently, "/swagger/index.html")
+	})
+	e.GET("/swagger//index.html", func(c *echo.Context) error {
+		target := "/swagger/index.html"
+		if c.QueryString() != "" {
+			target += "?" + c.QueryString()
+		}
+		return c.Redirect(http.StatusMovedPermanently, target)
+	})
+	e.GET("/swagger/*", echoSwagger.EchoWrapHandler(echoSwagger.URL("/swagger/doc.json")))
 
 	err = e.Start(":" + cfg.Port)
 	if err != nil {

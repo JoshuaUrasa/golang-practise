@@ -6,12 +6,18 @@ import (
 	"expense-tracker/internal/middleware"
 	"expense-tracker/internal/platform/metrics"
 	"log/slog"
+	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/labstack/echo/v5"
 	"gorm.io/gorm"
 )
+
+type CurrentUserResponse struct {
+	UserID any `json:"user_id"`
+	Email  any `json:"email"`
+}
 
 func NewRouter(db *gorm.DB, accessSecret, refreshSecret string, logger *slog.Logger) *echo.Echo {
 	e := echo.New()
@@ -60,12 +66,23 @@ func NewRouter(db *gorm.DB, accessSecret, refreshSecret string, logger *slog.Log
 	expenseGroup.PUT("/:id", expenseHandler.UpdateExpense)
 	expenseGroup.DELETE("/:id", expenseHandler.DeleteExpense)
 
-	protected.GET("/me", func(c *echo.Context) error {
-		return c.JSON(200, map[string]any{
-			"user_id": c.Get("user_id"),
-			"email":   c.Get("email"),
-		})
-	})
+	protected.GET("/me", currentUser)
 
 	return e
+}
+
+// currentUser godoc
+// @Summary      Current user
+// @Description  Get the authenticated user's token claims
+// @Tags         auth
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object}  server.CurrentUserResponse
+// @Failure      401  {object}  auth.ErrorResponse
+// @Router       /api/v1/me [get]
+func currentUser(c *echo.Context) error {
+	return c.JSON(http.StatusOK, map[string]any{
+		"user_id": c.Get("user_id"),
+		"email":   c.Get("email"),
+	})
 }

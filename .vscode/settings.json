@@ -1,0 +1,5 @@
+{
+  "yaml.schemas": {
+    "https://json.schemastore.org/swagger-2.0.json": "api/docs/swagger.yaml"
+  }
+}
